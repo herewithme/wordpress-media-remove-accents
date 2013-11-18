@@ -3,16 +3,7 @@
  * Build for remove accents for existing medias
  */
 
-// PHP Configuration
-error_reporting( E_ALL ^ E_NOTICE );
-@ini_set( 'display_startup_errors', '1' );
-@ini_set( 'display_errors', '1' );
-@ini_set( 'memory_limit', '512M' );
-@ini_set( 'max_execution_time', -1 );
-if ( function_exists( 'ignore_user_abort' ) )
-	ignore_user_abort( 1 );
-if ( function_exists( 'set_time_limit' ) )
-	set_time_limit( 0 );
+require( dirname( __FILE__ ) . '/_cli_init.php' );
 
 // Try to load WordPress !
 try {
@@ -34,6 +25,17 @@ function get_file_lines_counter( $file ) {
 
 	fclose( $handle );
 	return $linecount;
+}
+
+function mb_basename($file) { 
+	$r = explode('/',$file);
+	return end($r); 
+} 
+
+function _remove_accents( $value ) {
+	//$value = utf8_decode($value);
+	$value = remove_accents($value);
+	return $value;
 }
 
 // Get blogs list
@@ -77,15 +79,15 @@ foreach ( $blogs as $blog ) {
 
 		// Get partial file path
 		$_wp_attached_file = get_post_meta( $attachment_id, '_wp_attached_file', true );
-
+		
 		// Get file month folder
 		$month_folder = trailingslashit( dirname( $_wp_attached_file ) );
 
 		// Get only filename
-		$_wp_attached_file = basename( $_wp_attached_file );
-
+		$_wp_attached_file = mb_basename( $_wp_attached_file );
+		
 		// Try to remove accents from filename
-		$_wp_attached_file_without_accents = remove_accents( $_wp_attached_file );
+		$_wp_attached_file_without_accents = _remove_accents( $_wp_attached_file );
 
 		// No accents ? Skip to next media
 		if ( $_wp_attached_file_without_accents == $_wp_attached_file ) {
@@ -95,9 +97,14 @@ foreach ( $blogs as $blog ) {
 		// Be sur new name is uniq
 		$_wp_attached_file_without_accents = wp_unique_filename( $upload_dir['basedir'] . $month_folder, $_wp_attached_file_without_accents );
 
-		// Add to DB rename
+		// Add full URL to DB rename
 		$before = $upload_dir['baseurl'] . $month_folder . $_wp_attached_file;
 		$after = $upload_dir['baseurl'] . $month_folder . $_wp_attached_file_without_accents;
+		file_put_contents( $db_replacements, $before . $separator . $after . PHP_EOL, FILE_APPEND | LOCK_EX );
+		
+		// Add filename to DB rename
+		$before = $_wp_attached_file;
+		$after = $_wp_attached_file_without_accents;
 		file_put_contents( $db_replacements, $before . $separator . $after . PHP_EOL, FILE_APPEND | LOCK_EX );
 
 		// Add to files rename
@@ -105,19 +112,28 @@ foreach ( $blogs as $blog ) {
 		$after = $upload_dir['basedir'] . $month_folder . $_wp_attached_file_without_accents;
 		file_put_contents( $file_replacements, $before . $separator . $after . PHP_EOL, FILE_APPEND | LOCK_EX );
 
+		// Get thumb data
 		$_wp_attachment_metadata = get_post_meta( $attachment_id, '_wp_attachment_metadata', true );
-		$_wp_attachment_metadata['file'] = remove_accents( $_wp_attachment_metadata['file'] );
+		
+		// Use previos filename without accent
+		$_wp_attachment_metadata['file'] = $month_folder . $_wp_attached_file_without_accents;
+		
 		foreach ( $_wp_attachment_metadata['sizes'] as $size => $thumb_data ) {
 			$thumb_file_with_accents = $thumb_data['file'];
-			$thumb_file_without_accents = remove_accents( $thumb_data['file'] );
+			$thumb_file_without_accents = _remove_accents( $thumb_data['file'] );
 			$_wp_attachment_metadata['sizes'][$size]['file'] = $thumb_file_without_accents;
 			
 			// Be sur new name is uniq
 			$thumb_file_without_accents = wp_unique_filename( $upload_dir['basedir'] . $month_folder, $thumb_file_without_accents );
 
-			// Add to DB rename
+			// Add full URL to DB rename
 			$before = $upload_dir['baseurl'] . $month_folder . $thumb_file_with_accents;
 			$after = $upload_dir['baseurl'] . $month_folder . $thumb_file_without_accents;
+			file_put_contents( $db_replacements, $before . $separator . $after . PHP_EOL, FILE_APPEND | LOCK_EX );
+			
+			// Add filename to DB rename
+			$before = $thumb_file_with_accents;
+			$after = $thumb_file_without_accents;
 			file_put_contents( $db_replacements, $before . $separator . $after . PHP_EOL, FILE_APPEND | LOCK_EX );
 
 			// Add to files rename

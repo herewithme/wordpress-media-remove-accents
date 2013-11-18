@@ -1,14 +1,5 @@
 <?php
-// PHP Configuration
-error_reporting( E_ALL ^ E_NOTICE );
-@ini_set( 'display_startup_errors', '1' );
-@ini_set( 'display_errors', '1' );
-@ini_set( 'memory_limit', '512M' );
-@ini_set( 'max_execution_time', -1 );
-if ( function_exists( 'ignore_user_abort' ) )
-	ignore_user_abort( 1 );
-if ( function_exists( 'set_time_limit' ) )
-	set_time_limit( 0 );
+require( dirname( __FILE__ ) . '/_cli_init.php' );
 
 // Try to load WordPress !
 try {
@@ -39,6 +30,7 @@ $lines = file( dirname( __FILE__ ) . '/../data/db-replacements.txt' );
 foreach ( $lines as $line_num => $line ) {
 	$i++;
 	$line_data = explode( $separator, $line );
+	$line_data = array_map('trim', $line_data);
 
 	$config_data->search[] = $line_data[0];
 	$config_data->replace[] = $line_data[1];
