@@ -1,0 +1,28 @@
+{
+	"options": {
+		"CLI": {
+			"output": 			"text"
+		},
+		"PDO": {
+			"hostname": 		"localhost",
+			"port": 			3306,
+			"username": 		"",
+			"password": 		"",
+			"database": 		"",
+			"charset": 			""
+		},
+		"DBSR": {
+			"case-insensitive": false,
+			"extensive-search": false,
+			"search-page-size": 10000,
+			"var-match-strict": true,
+			"floats-precision": 5,
+			"convert-charsets": true,
+			"var-cast-replace": true,
+			"db-write-changes": true,
+			"handle-serialize": true
+		}
+	},
+	"search": [],
+	"replace": []
+}
