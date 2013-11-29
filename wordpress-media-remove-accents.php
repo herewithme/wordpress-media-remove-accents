@@ -32,4 +32,10 @@ if ( !defined('ABSPATH') ) {
 	die('-1');
 }
 
-add_filter('sanitize_file_name', 'remove_accents' );
+add_filter( 'sanitize_file_name', 'remove_accents', 10, 1 );
+add_filter( 'sanitize_file_name_chars', 'sanitize_file_name_chars', 10, 1 );
+
+function sanitize_file_name_chars( $special_chars = array() ) {
+	$special_chars = array_merge( array( '’', '‘', '“', '”', '«', '»', '‹', '›', '—', 'æ', 'œ', '€' ), $special_chars );
+	return $special_chars;
+}
